@@ -28,6 +28,7 @@ extern void mandelbrotSerial(
 //
 // Thread entrypoint.
 void* workerThreadStart(void* threadArgs) {
+    double startTime = CycleTimer::currentSeconds();
 
     WorkerArgs* args = static_cast<WorkerArgs*>(threadArgs);
 
@@ -43,6 +44,8 @@ void* workerThreadStart(void* threadArgs) {
 
     mandelbrotSerial(args->x0, args->y0, args->x1, args->y1, args->width, args->height,args->threadId*rows, rowsPerThread, args->maxIterations, args->output);
 
+    double endTime = CycleTimer::currentSeconds();
+    printf("[Thread# %d]:\t\t[%.3f] ms\n",args->threadId , (endTime-startTime) * 1000);
     return NULL;
 }
 
