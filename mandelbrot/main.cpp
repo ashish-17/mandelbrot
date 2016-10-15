@@ -19,6 +19,13 @@ extern void mandelbrotThread(
     int maxIterations,
     int output[]);
 
+extern void mandelbrotOmp(
+    int numThreads,
+    float x0, float y0, float x1, float y1,
+    int width, int height,
+    int maxIterations,
+    int output[]);
+
 extern void writePPMImage(
     int* data,
     int width, int height,
@@ -122,6 +129,7 @@ int main(int argc, char** argv) {
 
     int* output_serial = new int[width*height];
     int* output_thread = new int[width*height];
+    int* output_omp    = new int[width*height];
 
     //
     // Run the serial implementation.  Run the code three times and
@@ -154,20 +162,48 @@ int main(int argc, char** argv) {
     printf("[mandelbrot thread]:\t\t[%.3f] ms\n", minThread * 1000);
     writePPMImage(output_thread, width, height, "mandelbrot-thread.ppm", maxIterations);
 
+    //
+    // Run the omp version
+    //
+    memset(output_omp, 0, width * height * sizeof(int));
+    double minOmp = 1e30;
+    for (int i = 0; i < 3; ++i) {
+        double startTime = CycleTimer::currentSeconds();
+        mandelbrotOmp(numThreads, x0, y0, x1, y1, width, height, maxIterations, output_omp);
+        double endTime = CycleTimer::currentSeconds();
+        minOmp = std::min(minOmp, endTime - startTime);
+    }
+
+    printf("[mandelbrot Omp]:\t\t[%.3f] ms\n", minOmp * 1000);
+    writePPMImage(output_thread, width, height, "mandelbrot-omp.ppm", maxIterations);
+
     if (! verifyResult (output_serial, output_thread, width, height)) {
         printf ("Error : Output from threads does not match serial output\n");
 
         delete[] output_serial;
         delete[] output_thread;
+        delete[] output_omp;
+
+        return 1;
+    }
+
+    if (! verifyResult (output_serial, output_omp, width, height)) {
+        printf ("Error : Output from omp does not match serial output\n");
+
+        delete[] output_serial;
+        delete[] output_thread;
+        delete[] output_omp;
 
         return 1;
     }
 
     // compute speedup
-    printf("\t\t\t\t(%.2fx speedup from %d threads)\n", minSerial/minThread, numThreads);
+    printf("\n\t\t\t\t(%.2fx speedup from %d threads)\n", minSerial/minThread, numThreads);
+    printf("\n\t\t\t\t(%.2fx speedup from %d omp threads)\n", minSerial/minOmp, numThreads);
 
     delete[] output_serial;
     delete[] output_thread;
+    delete[] output_omp;
 
     return 0;
 }

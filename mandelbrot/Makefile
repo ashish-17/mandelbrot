@@ -1,6 +1,6 @@
 
 CXX=g++ -m64
-CXXFLAGS=-I../common -Iobjs/ -O3 -Wall
+CXXFLAGS=-I../common -Iobjs/ -O3 -Wall -fopenmp
 
 APP_NAME=mandelbrot
 OBJDIR=objs
@@ -20,10 +20,10 @@ dirs:
 clean:
 		/bin/rm -rf $(OBJDIR) *.ppm *~ $(APP_NAME)
 
-OBJS=$(OBJDIR)/main.o $(OBJDIR)/mandelbrotSerial.o $(OBJDIR)/mandelbrotThread.o $(PPM_OBJ)
+OBJS=$(OBJDIR)/main.o $(OBJDIR)/mandelbrotSerial.o $(OBJDIR)/mandelbrotThread.o $(OBJDIR)/mandelbrotOmp.o $(PPM_OBJ)
 
 $(APP_NAME): dirs $(OBJS)
-		$(CXX) $(CXXFLAGS) -o $@ $(OBJS) -lm -lpthread
+		$(CXX) $(CXXFLAGS) -o $@ $(OBJS) -lm -lpthread -fopenmp
 
 $(OBJDIR)/%.o: %.cpp
 		$(CXX) $< $(CXXFLAGS) -c -o $@
