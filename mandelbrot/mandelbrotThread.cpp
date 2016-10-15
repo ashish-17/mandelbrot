@@ -55,7 +55,7 @@ void* workerThreadStart(void* threadArgs) {
     }
 
     double endTime = CycleTimer::currentSeconds();
-    printf("[Thread# %d]:\t\t[%.3f] ms\n",args->threadId , (endTime-startTime) * 1000);
+    //printf("[Thread# %d]:\t\t[%.3f] ms\n",args->threadId , (endTime-startTime) * 1000);
     return NULL;
 }
 
