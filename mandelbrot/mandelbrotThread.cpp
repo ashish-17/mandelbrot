@@ -19,6 +19,7 @@ extern void mandelbrotSerial(
     float x0, float y0, float x1, float y1,
     int width, int height,
     int startRow, int numRows,
+    int startCol, int totalColumns,
     int maxIterations,
     int output[]);
 
@@ -32,17 +33,26 @@ void* workerThreadStart(void* threadArgs) {
 
     WorkerArgs* args = static_cast<WorkerArgs*>(threadArgs);
 
-    int rowsPerThread = args->height / args->numThreads;
-    if (rowsPerThread*args->numThreads < (int)args->height) {
-        rowsPerThread += 1; 
+    int rows = 0, columns = 0;
+    unsigned int chunk = 5;
+    for (unsigned int i = 0; i < args->height; i += chunk) {
+        rows =  args->height - i < chunk ? args->height - i : chunk;
+        for (unsigned int j = chunk*args->threadId; j < args->width; j += chunk*(args->numThreads)) {
+            columns =  args->width - j < chunk ? args->width - j : chunk;
+            mandelbrotSerial(args->x0, 
+                    args->y0, 
+                    args->x1, 
+                    args->y1, 
+                    args->width, 
+                    args->height,
+                    i, 
+                    rows, 
+                    j, 
+                    columns, 
+                    args->maxIterations, 
+                    args->output);
+        }
     }
-
-    int rows = rowsPerThread;
-    if (args->threadId == args->numThreads - 1) {
-        rowsPerThread = args->height - (rowsPerThread*(args->numThreads - 1));
-    }
-
-    mandelbrotSerial(args->x0, args->y0, args->x1, args->y1, args->width, args->height,args->threadId*rows, rowsPerThread, args->maxIterations, args->output);
 
     double endTime = CycleTimer::currentSeconds();
     printf("[Thread# %d]:\t\t[%.3f] ms\n",args->threadId , (endTime-startTime) * 1000);
